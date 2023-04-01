@@ -48,6 +48,7 @@ class RecipeController extends Controller
         ]);
 
         $data = [
+            //'email_author' => dapetin email dari session yang lagi login
             'judul' => $request->input('judul'),
             'backstory' => $request->input('backstory'),
             'asal' => $request->input('asal'),
@@ -99,5 +100,7 @@ class RecipeController extends Controller
     public function destroy(string $id)
     {
         //
+        recipe::where('recipeID', $id)->delete();
+        return redirect('recipe')->with('success', 'Berhasil Menghapus data');
     }
 }

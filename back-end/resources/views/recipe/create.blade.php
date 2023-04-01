@@ -1,7 +1,7 @@
 @extends('layout/aplikasi')
 
 @section('konten')
-    <form method="post" action="/siswa">
+    <form method="post" action="/recipe">
         @csrf
         <div class="mb-3">
             <label for="judul" class="form-label">Judul</label>

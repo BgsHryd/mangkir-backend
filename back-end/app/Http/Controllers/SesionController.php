@@ -33,15 +33,15 @@ class SesionController extends Controller
 
         if(Auth::attempt($infologin)){
             // kalau autentikasi sukses
-            return redirect('siswa')->with('success', 'anda berhasil login');
+            return redirect('recipe')->with('success', 'anda berhasil login');
         }else{
             // jika autentikasi gagal
-            return redirect('sesi')->withErrors("Email atau password salah");
+            return redirect('')->withErrors("Email atau password salah");
         }
     }
     function logout(){
         Auth::logout();
-        return redirect('sesi')->with('success', "anda berhasil logout");
+        return redirect('')->with('success', "anda berhasil logout");
     }
     function register(){
         return view('sesi.register');
@@ -77,7 +77,7 @@ class SesionController extends Controller
 
         if(Auth::attempt($infologin)){
             // kalau autentikasi sukses
-            return redirect('siswa')->with('success', Auth::user()->name.' Berhasil login');
+            return redirect('recipe')->with('success', Auth::user()->name.' Berhasil login');
         }else{
             // jika autentikasi gagal
             return redirect('sesi')->withErrors("Email atau password salah");

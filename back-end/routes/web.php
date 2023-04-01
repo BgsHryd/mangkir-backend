@@ -24,14 +24,17 @@ Route::get('/halaman', [PageController::class, 'index']);
 Route::get('/tentang', [PageController::class, 'about']);
 Route::get('/kontak', [PageController::class, 'kontak']);
 
-Route::resource('siswa', SiswaController::class);
-Route::resource('recipe', RecipeController::class);
+// Route::resource('siswa', SiswaController::class);
 
-Route::get("/", [SesionController::class, "index"]);
+Route::get("/", [SesionController::class, "index"])->name('login');
 Route::post("/login", [SesionController::class, "login"]);
 Route::get("/logout", [SesionController::class, "logout"]);
 Route::get("/register", [SesionController::class, "register"]);
 Route::post("/create", [SesionController::class, "create"]);
+
+Route::group(['middleware' => ['auth']], function(){
+    Route::resource('recipe', RecipeController::class);
+});
 
 // Route::get('siswa', [SiswaController::class, 'index']); 
 // Route::get('siswa/{id}', [SiswaController::class, 'detail'])->where('id', '[0-9]+'); 

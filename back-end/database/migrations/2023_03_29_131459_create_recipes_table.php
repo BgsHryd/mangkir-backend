@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('judul');
             $table->text('backstory');
             $table->string('asalDaerah');
-            $table->integer('porsi_orang');
+            $table->integer('servings');
             $table->integer('durasi_menit');
             $table->timestamps();
 

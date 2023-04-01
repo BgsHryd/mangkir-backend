@@ -20,7 +20,7 @@ class RecipeSeeder extends Seeder
             'judul'=> 'Rendang Sapi Josss',
             'backstory' => "Pada suatu hari di peternakan sapi",
             'asalDaerah'=> 'Padang',
-            'porsi_orang'=> 4,
+            'servings'=> 4,
             'durasi_menit'=> 120,
         ]);
     }
