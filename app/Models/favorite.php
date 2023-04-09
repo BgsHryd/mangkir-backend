@@ -5,11 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class tool extends Model
+class favorite extends Model
 {
     public function recipe(){
         return $this->belongsTo(recipe::class);
     }
-    protected $fillable = ['toolID', 'recipeID', 'urutan', 'deskripsi', 'created_at', 'updated_at'];
+    public function User(){
+        return $this->belongsTo(User::class);
+    }
+    
+    protected $fillable = ['id', 'recipeID', 'email', 'created_at', 'updated_at'];
+
     use HasFactory;
 }

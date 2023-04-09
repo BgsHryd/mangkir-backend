@@ -16,12 +16,14 @@ class RecipeSeeder extends Seeder
         //
         DB::table('recipes')->insert([
             'recipeID'=>0,
-            'emailAuthor'=> 'testing@gmail.com',
+            'emailAuthor'=> 'ivy@mail.com',
             'judul'=> 'Rendang Sapi Josss',
             'backstory' => "Pada suatu hari di peternakan sapi",
             'asalDaerah'=> 'Padang',
             'servings'=> 4,
             'durasi_menit'=> 120,
+            'kategori' => 'daging',
+            'numReviews' => 0
         ]);
     }
 }

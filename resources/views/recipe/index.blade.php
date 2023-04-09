@@ -5,10 +5,12 @@
     <table class='table'>
         <thead>
             <tr>
+                <th>Foto</th>
                 <th>Judul</th>
                 <th>Email Author</th>
                 <th>Backstory</th>
                 <th>Asal Daerah</th>
+                <th>Kategori</th>
                 <th>Servings</th>
                 <th>Durasi</th>
                 <th>Aksi</th>
@@ -17,10 +19,16 @@
         <tbody>
             @foreach ($data as $item)
                 <tr>
+                    <td>
+                        @if ($item->foto)
+                            <img style="max-width: 50px; max-height:50px" src="{{ url('foto').'/'.$item->foto }}"/>
+                        @endif
+                    </td>
                     <td>{{ $item->judul }}</td>
                     <td>{{ $item->emailAuthor }}</td>
                     <td>{{ $item->backstory }}</td>
                     <td>{{ $item->asalDaerah }}</td>
+                    <td>{{ $item->kategori }}</td>
                     <td>{{ $item->servings }}</td>
                     <td>{{ $item->durasi_menit }}</td>
                     <td>

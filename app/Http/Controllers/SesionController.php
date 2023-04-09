@@ -14,6 +14,18 @@ class SesionController extends Controller
     function index(){
         return view('sesi.index');
     }
+    public function loginReact(Request $request)
+    {
+        $credentials = $request->only('email', 'password');
+
+        if (Auth::attempt($credentials)) {
+            $user = Auth::user();
+            $token = $user->createToken('MyApp')->accessToken;
+            return response()->json(['token' => $token]);
+        }
+
+        return response()->json(['error' => 'Invalid credentials'], 401);
+    }
     function login(Request $request){
         Session::flash('email', $request->email);
         // validasi isian

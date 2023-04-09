@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('nama_alat');
             $table->timestamps();
 
-            $table->foreign('recipeID')->references('recipeID')->on('recipes');
+            $table->foreign('recipeID')->references('recipeID')->on('recipes')->onDelete('cascade')->onUpdate('cascade');
         });
     }
 

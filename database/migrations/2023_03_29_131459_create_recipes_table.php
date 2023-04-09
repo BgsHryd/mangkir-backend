@@ -20,9 +20,10 @@ return new class extends Migration
             $table->string('asalDaerah');
             $table->integer('servings');
             $table->integer('durasi_menit');
+            $table->string('kategori')->default('');
             $table->timestamps();
 
-            $table->foreign('emailAuthor')->references('email')->on('users');
+            $table->foreign('emailAuthor')->references('email')->on('users')->onDelete('cascade')->onUpdate('cascade');
         });
     }
 

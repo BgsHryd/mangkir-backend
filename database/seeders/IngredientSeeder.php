@@ -15,7 +15,7 @@ class IngredientSeeder extends Seeder
     {
         //
         DB::table('ingredients')->insert([
-            'ingredientID'=>0,
+            'ingredientID'=>1,
             'recipeID'=> 1,
             'quantity'=> 0.25,
             'ingredient_name' => "Minyak wijen",
@@ -23,7 +23,7 @@ class IngredientSeeder extends Seeder
         ]);
 
         DB::table('ingredients')->insert([
-            'ingredientID'=>1,
+            'ingredientID'=>2,
             'recipeID'=> 1,
             'quantity'=> 4,
             'ingredient_name' => "Bawang merah",
@@ -31,7 +31,7 @@ class IngredientSeeder extends Seeder
         ]);
 
         DB::table('ingredients')->insert([
-            'ingredientID'=>2,
+            'ingredientID'=>3,
             'recipeID'=> 1,
             'quantity'=> 3,
             'ingredient_name' => "Bawang putih",

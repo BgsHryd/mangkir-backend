@@ -4,7 +4,7 @@
     </a>
 
     <ul class="nav nav-pills">
-      <li class="nav-item"><a href="/recipe" class="nav-link active" aria-current="page">Siswa</a></li>
+      <li class="nav-item"><a href="/recipe" class="nav-link active" aria-current="page">Resep</a></li>
       <li class="nav-item"><a href="/logout" class="nav-link">Logout</a></li>
     </ul>
   </header>

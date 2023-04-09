@@ -14,11 +14,12 @@ return new class extends Migration
         Schema::create('ingredients', function (Blueprint $table) {
             $table->id('ingredientID');
             $table->unsignedBigInteger('recipeID');
-            $table->string('takaran');
-            $table->string('nama_bahan');
+            $table->string('unit');
+            $table->string('ingredient_name');
+            $table->float('quantity');
             $table->timestamps();
 
-            $table->foreign('recipeID')->references('recipeID')->on('recipes');
+            $table->foreign('recipeID')->references('recipeID')->on('recipes')->onDelete('cascade')->onUpdate('cascade');
         });
     }
 
