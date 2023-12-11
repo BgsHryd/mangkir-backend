@@ -10,6 +10,6 @@ class tool extends Model
     public function recipe(){
         return $this->belongsTo(recipe::class);
     }
-    protected $fillable = ['toolID', 'recipeID', 'urutan', 'deskripsi', 'created_at', 'updated_at'];
+    protected $fillable = ['toolID', 'nama_alat','recipeID', 'urutan', 'deskripsi', 'created_at', 'updated_at'];
     use HasFactory;
 }

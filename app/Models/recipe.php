@@ -25,6 +25,6 @@ class recipe extends Model
         return $this->hasMany(favorite::class);
     }
 
-    protected $fillable = ['recipeID', 'emailAuthor','judul', 'backstory', 'asalDaerah', 'servings', 'durasi_menit', 'kategori', 'foto', 'rating', 'numReviews'];
+    protected $fillable = ['recipeID', 'videoURL','emailAuthor','judul', 'backstory', 'asalDaerah', 'servings', 'durasi_menit', 'kategori', 'foto', 'rating', 'numReviews'];
     use HasFactory;
 }

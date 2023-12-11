@@ -22,6 +22,10 @@ class RecipeController extends Controller
     {
         //
         $data = recipe::orderby('recipeID')->paginate(5);
+        if (request()->segment(1) == 'api') return response()->json([
+            'error' => false,
+            'list' => $data
+        ]);
         return view('recipe.index')->with('data', $data);
     }
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\RecipeController;
 use App\Models\favorite;
 use App\Models\ingredient;
 use App\Models\recipe;
@@ -12,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use SebastianBergmann\Environment\Console;
 
@@ -30,9 +32,97 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+Route::resource('product', RecipeController::class);
+
 Route::get('/users', function(){
     $users = User::get();
     return response()->json($users);
+});
+
+Route::get('/getName', function(Request $request) {
+    $user = User::where('email', $request->email)->first();
+    return response()->json($user->name);
+});
+
+Route::post('/recipe', function(Request $request){
+    // add recipe
+    $rules = [
+        'judul' => 'required',
+        'servings' => 'required',
+        'steps' => 'required',
+        'ingredients' => 'required',
+        'tools' => 'required'
+    ];
+    
+    $validator = Validator::make($request->all(), $rules);
+    if ($validator->fails()){
+        return response()->json(['error' => $validator->errors()], 401);
+    }
+    
+    $data_recipe = [
+        'emailAuthor' => $request->email,
+        'judul' => $request->judul,
+        'backstory' => $request->backstory,
+        'asalDaerah' => $request->asalDaerah,
+        'servings' => $request->servings,
+        'durasi_menit' => $request->durasi_menit,
+        'foto' => $request->foto,
+        'rating' => null,
+        'videoURL' => $request->video,
+        'numReviews' => 0
+    ];
+    
+    if ($request->hasFile('foto')) {
+        $foto_file = $request->file('foto');
+        $foto_ekstensi = $foto_file->getClientOriginalExtension();
+        $foto_nama = date('ymdhis').'.'.$foto_ekstensi;
+        $foto_file->move(public_path('foto'), $foto_nama);
+        $data_recipe['foto'] = $foto_nama;
+        return response()->json($foto_nama);
+    }
+    // return response()->json($data_recipe);
+    
+    $new_recipe = recipe::create($data_recipe);
+    $new_recipe_id = $new_recipe->id;
+
+    // split ingredients by \n
+    $ingreds = explode("\n", $request->ingredients);
+
+    // loop each ingredient and split into quantity unit time
+    foreach ($ingreds as $line) {
+        preg_match('/^(\d+)\s*(\S+)\s*(.*)$/', $line, $matches);
+        
+        $output = [
+            'recipeID' => $new_recipe_id,
+            'quantity' => (int) $matches[1],
+            'unit' => strtolower($matches[2]),
+            'ingredient_name' => strtolower($matches[3]),
+        ];
+        ingredient::create($output);
+    }
+
+    $tools = explode("\n", $request->tools);
+
+    // loop each tool
+    foreach ($tools as $tool){
+        $data_tool = [
+            'recipeID' => $new_recipe_id,
+            'nama_alat' => $tool,
+        ];
+        // return response()->json($data_tool);
+        tool::create($data_tool);
+    }
+
+    $steps = explode("\n", $request->steps);
+    foreach($steps as $i => $step){
+        $data_step = [
+            'recipeID' => $new_recipe_id,
+            'urutan' => $i + 1,
+            'deskripsi' => $step,
+        ];
+        step_recipe::create($data_step);
+    }
+    return response()->json(['message' => 'Recipe Post Successfully'], 200);
 });
 
 Route::post('/login', function (Request $request) {
@@ -77,9 +167,83 @@ Route::post('/register', function(Request $request){
     return response()->json(['message' => 'User registered successfully'], 200);
 });
 
-Route::get('/recipes', function(){
-    $recipes = recipe::get();
+Route::get('/recipes', function () {
+    $recipes = Recipe::get();
+    
+    // Add the image URL as an attribute to each recipe
+    $recipes = $recipes->map(function ($recipe) {
+        $imageUrl = '';
+        if ($recipe->foto && preg_match('/^data:image\/(\w+);base64,/', $recipe->foto)) {
+            $imageData = base64_decode(explode(',', $recipe->foto)[1]);
+            $fileName = uniqid() . '.jpg';
+            Storage::disk('public')->put($fileName, $imageData);
+            $imageUrl = Storage::disk('public')->url($fileName);
+        }
+        return $recipe->setAttribute('image_url', $imageUrl);
+    });
+
+    // Return the modified recipes as a JSON response
     return response()->json($recipes);
+});
+
+Route::get('/recipes/best', function(){
+    $best = Recipe::orderBy('rating', 'desc')->get();
+    return response()->json($best);
+});
+
+Route::get('/search', function(Request $request) {
+    $keyword = $request->query('keyword');
+
+    $filtered_recipe = DB::table('recipes')
+                        ->whereRaw('LOWER(recipes.judul) LIKE ?', ['%' . strtolower($keyword) . '%'])->get();
+
+    // $filtered_recipe = $filtered_recipe
+    //                     ->where('kategori', 'daging')
+    //                     ->get();
+    return response()->json($filtered_recipe);
+});
+
+Route::get('/filter', function(Request $request){
+    $durasi_cat = $request->durasi;
+    $kategori = $request->category;
+
+    if ($durasi_cat === "" && $kategori === "") {
+        return response()->json(['error' => 'Please provide both durasi and category'], 401);
+    }
+    if ($durasi_cat == ""){
+        $filtered_recipe = Recipe::where('kategori', $kategori)
+                        ->get();
+    }
+    if ($kategori == ""){
+        if ($durasi_cat == "Less than 30 minutes"){
+            $filtered_recipe = Recipe::where('durasi_menit', '<', 30)
+                                ->get();
+        }else if ($durasi_cat == "30 minutes to 1 hour"){
+            $filtered_recipe = Recipe::whereBetween('durasi_menit', [30, 60])
+                                ->get();
+        }else{
+            $filtered_recipe = Recipe::where('durasi_menit', '>', 60)
+                                ->get();
+        }
+    }else{
+        if($durasi_cat == "Less than 30 minutes"){
+            $filtered_recipe = Recipe::where('kategori', $kategori)
+                            ->where('durasi_menit', '<', 30)
+                            ->get();
+        }else if ($durasi_cat == "30 minutes to 1 hour"){
+            $filtered_recipe = Recipe::where('kategori', $kategori)
+                            ->whereBetween('durasi_menit', [30, 60])
+                            ->get();
+        }else if ($durasi_cat == "More than 1 hour"){
+            $filtered_recipe = Recipe::where('kategori', $kategori)
+                            ->where('durasi_menit', '>', 60)
+                            ->get();
+        }
+    }
+    $result_json = [
+        'data' => $filtered_recipe
+    ];
+    return response()->json($result_json);
 });
 
 Route::get('/recipe/{recipe}', function ($recipeID) {
@@ -142,29 +306,50 @@ Route::get('/recipes/favorite', function(Request $request) {
     foreach ($data_favorites as $favorite){
         $recipeID = $favorite->recipeID;
         $recipe = recipe::where('recipeID', $recipeID)->first();
+        $recipe['favID'] = $favorite->id;
         $data_recipes[] = $recipe;
     }
+    $all_data = [
+        'dataRecipes' => $data_recipes,
+        'dataFavorites' => $data_favorites
+    ];
 
-    return response()->json($data_recipes);
+    return response()->json($all_data);
 });
 
 Route::post('/recipes/favorite', function(Request $request) {
-    $id = $request['id'];
+    $recipeID = $request['id'];
     $email = $request['email'];
+
     $rules = [
-        'id' => ['required', Rule::unique('favorites')->where(function ($query) use($id, $email) {
-                return $query->where('id', $id)->where('email', $email);
-        })],
+        'id' => [
+            'required',
+            Rule::unique('favorites')->ignore($request['id'])->where(function ($query) use ($email, $recipeID) {
+                return $query->where('email', $email)->where('recipeID', $recipeID);
+            })
+        ],
+        'email' => [
+            'required',
+            Rule::unique('favorites')->ignore($request['email'])->where(function ($query) use ($email, $recipeID) {
+                return $query->where('email', $email)->where('recipeID', $recipeID);
+            })
+        ]
     ];
 
     $validator = Validator::make($request->all(), $rules);
-    if ($validator->fails()){
-        return response()->json(['errors' => $validator->errors()], 422);
+    if ($validator->fails()) {
+        $errors = $validator->errors();
+        if ($errors->has('id') && $errors->has('email')) {
+            $message = 'kamu udah nambahin ini resep ke list favorite';
+        } else {
+            $message = 'kamu udah nambahin ini resep ke list favorite';
+        }
+        return response()->json(['message' => $message, 'errors' => $errors], 422);
     }
 
     // add favorite
     favorite::create([
-        'id' => $id,
+        'recipeID' => $recipeID,
         'email' => $email
     ]);
 
