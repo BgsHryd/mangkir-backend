@@ -47,6 +47,7 @@ Route::get('/getName', function(Request $request) {
 Route::post('/recipe', function(Request $request){
     // add recipe
     $rules = [
+        'email' => 'required',
         'judul' => 'required',
         'servings' => 'required',
         'steps' => 'required',
@@ -65,6 +66,7 @@ Route::post('/recipe', function(Request $request){
         'backstory' => $request->backstory,
         'asalDaerah' => $request->asalDaerah,
         'servings' => $request->servings,
+        'kategori' => $request->kategori,
         'durasi_menit' => $request->durasi_menit,
         'foto' => $request->foto,
         'rating' => null,
@@ -86,7 +88,7 @@ Route::post('/recipe', function(Request $request){
     $new_recipe_id = $new_recipe->id;
 
     // split ingredients by \n
-    $ingreds = explode("\n", $request->ingredients);
+    $ingreds = $request->ingredients;
 
     // loop each ingredient and split into quantity unit time
     foreach ($ingreds as $line) {
@@ -101,8 +103,7 @@ Route::post('/recipe', function(Request $request){
         ingredient::create($output);
     }
 
-    $tools = explode("\n", $request->tools);
-
+    $tools = $request->tools;
     // loop each tool
     foreach ($tools as $tool){
         $data_tool = [
@@ -113,7 +114,7 @@ Route::post('/recipe', function(Request $request){
         tool::create($data_tool);
     }
 
-    $steps = explode("\n", $request->steps);
+    $steps = $request->steps;
     foreach($steps as $i => $step){
         $data_step = [
             'recipeID' => $new_recipe_id,
@@ -186,64 +187,56 @@ Route::get('/recipes', function () {
     return response()->json($recipes);
 });
 
+Route::get('/myRecipes', function (Request $request) {
+    $email = $request->email;
+    $recipes = Recipe::where('emailAuthor', $email)->get();
+    
+    // Add the image URL as an attribute to each recipe
+    $recipes = $recipes->map(function ($recipe) {
+        $imageUrl = '';
+        if ($recipe->foto && preg_match('/^data:image\/(\w+);base64,/', $recipe->foto)) {
+            $imageData = base64_decode(explode(',', $recipe->foto)[1]);
+            $fileName = uniqid() . '.jpg';
+            Storage::disk('public')->put($fileName, $imageData);
+            $imageUrl = Storage::disk('public')->url($fileName);
+        }
+        return $recipe->setAttribute('image_url', $imageUrl);
+    });
+
+    // Return the modified recipes as a JSON response
+    return response()->json($recipes);
+});
+
 Route::get('/recipes/best', function(){
     $best = Recipe::orderBy('rating', 'desc')->get();
     return response()->json($best);
 });
 
-Route::get('/search', function(Request $request) {
+Route::get('/search', function(Request $request){
     $keyword = $request->query('keyword');
-
-    $filtered_recipe = DB::table('recipes')
-                        ->whereRaw('LOWER(recipes.judul) LIKE ?', ['%' . strtolower($keyword) . '%'])->get();
-
-    // $filtered_recipe = $filtered_recipe
-    //                     ->where('kategori', 'daging')
-    //                     ->get();
-    return response()->json($filtered_recipe);
-});
-
-Route::get('/filter', function(Request $request){
-    $durasi_cat = $request->durasi;
+    $durasi = $request->durasi;
     $kategori = $request->category;
-
-    if ($durasi_cat === "" && $kategori === "") {
-        return response()->json(['error' => 'Please provide both durasi and category'], 401);
-    }
-    if ($durasi_cat == ""){
-        $filtered_recipe = Recipe::where('kategori', $kategori)
-                        ->get();
-    }
-    if ($kategori == ""){
-        if ($durasi_cat == "Less than 30 minutes"){
-            $filtered_recipe = Recipe::where('durasi_menit', '<', 30)
-                                ->get();
-        }else if ($durasi_cat == "30 minutes to 1 hour"){
-            $filtered_recipe = Recipe::whereBetween('durasi_menit', [30, 60])
-                                ->get();
-        }else{
-            $filtered_recipe = Recipe::where('durasi_menit', '>', 60)
-                                ->get();
-        }
+    
+    if ($keyword != ""){
+        $filtered_recipe = Recipe::whereRaw('LOWER(recipes.judul) LIKE ?', ['%' . strtolower($keyword) . '%']);
     }else{
-        if($durasi_cat == "Less than 30 minutes"){
-            $filtered_recipe = Recipe::where('kategori', $kategori)
-                            ->where('durasi_menit', '<', 30)
-                            ->get();
-        }else if ($durasi_cat == "30 minutes to 1 hour"){
-            $filtered_recipe = Recipe::where('kategori', $kategori)
-                            ->whereBetween('durasi_menit', [30, 60])
-                            ->get();
-        }else if ($durasi_cat == "More than 1 hour"){
-            $filtered_recipe = Recipe::where('kategori', $kategori)
-                            ->where('durasi_menit', '>', 60)
-                            ->get();
-        }
+        $filtered_recipe = DB::table('recipes');
     }
-    $result_json = [
-        'data' => $filtered_recipe
-    ];
-    return response()->json($result_json);
+
+    if ($durasi == "Less than 30 minutes"){
+        $filtered_recipe = $filtered_recipe->where('durasi_menit', '<', 30);
+    }else if ($durasi == "30 minutes to 1 hour"){
+        $filtered_recipe = $filtered_recipe->whereBetween('durasi_menit', [30, 60]);
+    }else if($durasi == "More than 1 hour"){
+        $filtered_recipe = $filtered_recipe->where('durasi_menit', '>', 60);
+    }
+
+    if ($kategori != ""){
+        $filtered_recipe = $filtered_recipe->where('kategori', $kategori)->get();
+    }else{
+        $filtered_recipe = $filtered_recipe->get();
+    }
+    return response()->json($filtered_recipe);
 });
 
 Route::get('/recipe/{recipe}', function ($recipeID) {
